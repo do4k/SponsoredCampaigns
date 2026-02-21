@@ -115,6 +115,7 @@ func UpdateCampaign(c *gin.Context) {
 	existing.DeliveryAreas = updateData.DeliveryAreas
 	existing.TimeOfDay = updateData.TimeOfDay
 	existing.PartnerID = updateData.PartnerID // allowed to change? assume yes
+	existing.CarouselBoost = updateData.CarouselBoost
 	
 	if err := database.Db.Save(&existing).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -205,6 +206,7 @@ func SeedCampaigns(c *gin.Context) {
 				DeliveryAreas: deliveryAreas,
 				TimeOfDay: timeOfDay,
 				DaysOfWeek: daysOfWeek,
+				CarouselBoost: rand.Float32() < 0.2, // 20% chance of boost
 			}
 			
 			// Just insert directly for speed

@@ -36,6 +36,12 @@ func SyncCampaignToRedis(c *models.Campaign) error {
 				// Using HSet to store partnerID as field and '1' as value. 
 				// In future we could store the full JSON payload here.
 				pipeline.HSet(ctx, key, c.PartnerID, "1")
+
+				// If carousel boost is enabled, duplicate to carousel specific key
+				if c.CarouselBoost {
+					keyCarousel := fmt.Sprintf("sponsors:h:carousel:%s:%s:%s", strings.ToLower(day), t, area)
+					pipeline.HSet(ctx, keyCarousel, c.PartnerID, "1")
+				}
 			}
 		}
 	}
@@ -63,6 +69,10 @@ func RemoveCampaignFromRedis(c *models.Campaign) {
 			for _, area := range c.DeliveryAreas {
 				key := fmt.Sprintf("sponsors:h:%s:%s:%s", strings.ToLower(day), t, area)
 				pipeline.HDel(ctx, key, c.PartnerID)
+
+				// Always try to remove from carousel key too, just in case
+				keyCarousel := fmt.Sprintf("sponsors:h:carousel:%s:%s:%s", strings.ToLower(day), t, area)
+				pipeline.HDel(ctx, keyCarousel, c.PartnerID)
 			}
 		}
 	}
@@ -75,50 +85,78 @@ func CheckSponsoredLogic(req *models.CheckRequest) ([]string, string, error) {
 	currentTimeBucket := GetCurrentTimeBucket(now)
 	currentDay := strings.ToLower(now.Weekday().String())
 
-	// 2. Construct Redis Keys (Using Hash prefix 'sponsors:h')
-	keySpecific := fmt.Sprintf("sponsors:h:%s:%s:%s", currentDay, currentTimeBucket, req.DeliveryArea)
-	keyWildcard := fmt.Sprintf("sponsors:h:%s:%s:*", currentDay, currentTimeBucket)
+	// 2. Base keys
+	keyPrefix := "sponsors:h"
+	keyPrefixCarousel := "sponsors:h:carousel"
 
-	// 3. Use HMGet to fetch ONLY the requested partners
-	// This is O(N) where N is number of requested partners, NOT total active partners.
+	// 3. Construct regular keys
+	keySpecific := fmt.Sprintf("%s:%s:%s:%s", keyPrefix, currentDay, currentTimeBucket, req.DeliveryArea)
+	keyWildcard := fmt.Sprintf("%s:%s:%s:*", keyPrefix, currentDay, currentTimeBucket)
+	
+	// 4. Construct carousel keys (if needed)
+	var keySpecificCarousel, keyWildcardCarousel string
+	if req.IncludeCarousel {
+		keySpecificCarousel = fmt.Sprintf("%s:%s:%s:%s", keyPrefixCarousel, currentDay, currentTimeBucket, req.DeliveryArea)
+		keyWildcardCarousel = fmt.Sprintf("%s:%s:%s:*", keyPrefixCarousel, currentDay, currentTimeBucket)
+	}
+
+	// 5. Use HMGet to fetch ONLY the requested partners
 	pipeline := database.Rdb.Pipeline()
 	
-	// Convert partner IDs to interface{} slice for variadic function
 	args := make([]string, len(req.PartnerIDs))
 	for i, v := range req.PartnerIDs {
 		args[i] = v
 	}
 	
+	// Always Check regular (sponsors:h)
+	// This ensures that even if a partner has a carousel boost, they are still found
+	// when searching for regular sponsorship.
+	// Partners with CarouselBoost are stored in BOTH 'sponsors:h' and 'sponsors:h:carousel'
 	pipeline.HMGet(ctx, keySpecific, args...)
 	pipeline.HMGet(ctx, keyWildcard, args...)
+	
+	// Check carousel only if requested
+	if req.IncludeCarousel {
+		pipeline.HMGet(ctx, keySpecificCarousel, args...)
+		pipeline.HMGet(ctx, keyWildcardCarousel, args...)
+	}
 	
 	cmds, err := pipeline.Exec(ctx)
 	if err != nil {
 		return nil, "", err
 	}
 	
-	// 4. Process results
-	// HMGet returns a slice of values. If a field exists, the value is returned (non-nil).
-	// If it doesn't exist, nil is returned.
-	
+	// 6. Process results
 	specificResults := cmds[0].(*redis.SliceCmd).Val()
 	wildcardResults := cmds[1].(*redis.SliceCmd).Val()
+	
+	var specificResultsCarousel []interface{}
+	var wildcardResultsCarousel []interface{}
+	
+	if req.IncludeCarousel {
+		specificResultsCarousel = cmds[2].(*redis.SliceCmd).Val()
+		wildcardResultsCarousel = cmds[3].(*redis.SliceCmd).Val()
+	}
 	
 	activePartners := make(map[string]bool)
 	
 	for i, pid := range req.PartnerIDs {
-		// Check specific area match
-		if specificResults[i] != nil {
+		// Check regular
+		if specificResults[i] != nil || wildcardResults[i] != nil {
 			activePartners[pid] = true
-			continue 
+			continue // Found in regular, so they are sponsored regardless of carousel check
 		}
-		// Check wildcard match
-		if wildcardResults[i] != nil {
-			activePartners[pid] = true
+		// Check carousel (if enabled in request)
+		// Note: Partners with CarouselBoost are usually in both keys, so the check above catches them.
+		// But this is here for completeness if logic changes.
+		if req.IncludeCarousel {
+			if specificResultsCarousel[i] != nil || wildcardResultsCarousel[i] != nil {
+				activePartners[pid] = true
+			}
 		}
 	}
 
-	// 5. Convert map to list
+	// 7. Convert map to list
 	result := []string{}
 	for pid := range activePartners {
 		result = append(result, pid)
@@ -176,6 +214,13 @@ func WarmupCache() {
 				for _, area := range c.DeliveryAreas {
 					key := fmt.Sprintf("sponsors:h:%s:%s:%s", strings.ToLower(day), t, area)
 					pipeline.HSet(ctx, key, c.PartnerID, "1")
+					
+					// If carousel boost is enabled, duplicate to carousel specific key
+					if c.CarouselBoost {
+						keyCarousel := fmt.Sprintf("sponsors:h:carousel:%s:%s:%s", strings.ToLower(day), t, area)
+						pipeline.HSet(ctx, keyCarousel, c.PartnerID, "1")
+					}
+					
 					count++
 				}
 			}

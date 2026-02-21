@@ -3,6 +3,7 @@ import CampaignList from './components/CampaignList';
 import CampaignForm from './components/CampaignForm';
 import SeedPanel from './components/SeedPanel';
 import CheckSponsored from './components/CheckSponsored';
+import LoadTestPanel from './components/LoadTestPanel';
 
 function App() {
   const [campaigns, setCampaigns] = useState([]);
@@ -84,6 +85,10 @@ function App() {
           <div style={{ marginTop: '20px' }}>
             <h2>Check Sponsorship</h2>
             <CheckSponsored />
+          </div>
+
+          <div style={{ marginTop: '20px' }}>
+             <LoadTestPanel />
           </div>
         </div>
 

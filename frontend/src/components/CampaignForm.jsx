@@ -10,7 +10,8 @@ export default function CampaignForm({ editingCampaign, onSuccess, onCancel }) {
         created_by: 'ui@user',
         delivery_areas: '',
         time_of_day: [],
-        days_of_week: []
+        days_of_week: [],
+        carousel_boost: false
     });
 
     useEffect(() => {
@@ -21,7 +22,8 @@ export default function CampaignForm({ editingCampaign, onSuccess, onCancel }) {
                 created_by: editingCampaign.created_by,
                 delivery_areas: editingCampaign.delivery_areas.join(', '),
                 time_of_day: editingCampaign.time_of_day || [],
-                days_of_week: editingCampaign.days_of_week || []
+                days_of_week: editingCampaign.days_of_week || [],
+                carousel_boost: editingCampaign.carousel_boost || false
             });
         } else {
             // Reset for new
@@ -31,7 +33,8 @@ export default function CampaignForm({ editingCampaign, onSuccess, onCancel }) {
                 created_by: 'ui@user',
                 delivery_areas: '',
                 time_of_day: [],
-                days_of_week: []
+                days_of_week: [],
+                carousel_boost: false
             });
         }
     }, [editingCampaign]);
@@ -72,7 +75,8 @@ export default function CampaignForm({ editingCampaign, onSuccess, onCancel }) {
                         created_by: 'ui@user',
                         delivery_areas: '',
                         time_of_day: [],
-                        days_of_week: []
+                        days_of_week: [],
+                        carousel_boost: false
                     });
                 }
             } else {
@@ -163,6 +167,16 @@ export default function CampaignForm({ editingCampaign, onSuccess, onCancel }) {
                             </button>
                         ))}
                     </div>
+                </div>
+                <div className="form-group" style={{ display: 'flex', alignItems: 'center' }}>
+                    <input
+                        type="checkbox"
+                        id="carousel_boost"
+                        checked={formData.carousel_boost}
+                        onChange={e => setFormData({ ...formData, carousel_boost: e.target.checked })}
+                        style={{ width: 'auto', marginRight: '10px' }}
+                    />
+                    <label htmlFor="carousel_boost" style={{ margin: 0, cursor: 'pointer' }}>Carousel Boost</label>
                 </div>
                 <button type="submit">{editingCampaign ? 'Update' : 'Create'}</button>
                 {editingCampaign && (

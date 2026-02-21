@@ -16,12 +16,14 @@ type Campaign struct {
 	DeliveryAreas pq.StringArray `gorm:"type:text[]" json:"delivery_areas"` // e.g. ["bs1", "bs2"] or ["*"]
 	TimeOfDay     pq.StringArray `gorm:"type:text[]" json:"time_of_day"`    // e.g. ["breakfast", "lunch"] or ["all-day"]
 	DaysOfWeek    pq.StringArray `gorm:"type:text[]" json:"days_of_week"`   // e.g. ["monday", "friday"]
+	CarouselBoost bool           `json:"carousel_boost"`                    // New field for premium boost
 }
 
 // CheckRequest defines the structure for the sponsored check API
 type CheckRequest struct {
 	DeliveryArea string   `json:"delivery_area" binding:"required"`
 	PartnerIDs   []string `json:"partner_ids" binding:"required"`
+	IncludeCarousel bool  `json:"include_carousel"` // Request to fetch carousel boosted partners
 }
 
 // TimeBuckets defines the available time slots

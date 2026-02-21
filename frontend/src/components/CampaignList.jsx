@@ -12,6 +12,7 @@ export default function CampaignList({ campaigns, onEdit, onDelete, loading }) {
                     <th>Areas</th>
                     <th>Times</th>
                     <th>Days</th>
+                    <th>Boost</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -35,6 +36,13 @@ export default function CampaignList({ campaigns, onEdit, onDelete, loading }) {
                             {camp.days_of_week && camp.days_of_week.map(d => (
                                 <span key={d} className="badge">{d.substring(0,3)}</span>
                             ))}
+                        </td>
+                        <td style={{ textAlign: 'center' }}>
+                            {camp.carousel_boost ? (
+                                <span style={{ color: 'green', fontSize: '1.2em' }}>✓</span>
+                            ) : (
+                                <span style={{ color: '#ccc' }}>-</span>
+                            )}
                         </td>
                         <td className="actions">
                             <button className="secondary" onClick={() => onEdit(camp)}>Edit</button>

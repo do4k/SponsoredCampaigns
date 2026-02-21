@@ -3,6 +3,7 @@ import { useState } from 'react';
 export default function CheckSponsored() {
   const [deliveryArea, setDeliveryArea] = useState('BS1');
   const [partnerIds, setPartnerIds] = useState('');
+  const [includeCarousel, setIncludeCarousel] = useState(false);
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -30,7 +31,8 @@ export default function CheckSponsored() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           delivery_area: deliveryArea,
-          partner_ids: partners
+          partner_ids: partners,
+          include_carousel: includeCarousel
         })
       });
 
@@ -74,6 +76,17 @@ export default function CheckSponsored() {
             rows={3}
             style={{ width: '100%', padding: '8px', marginBottom: '10px' }}
           />
+        </div>
+        <div className="form-group" style={{ marginBottom: '10px' }}>
+             <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                <input 
+                    type="checkbox" 
+                    checked={includeCarousel}
+                    onChange={e => setIncludeCarousel(e.target.checked)}
+                    style={{ marginRight: '8px' }}
+                />
+                Include Carousel Boosted
+             </label>
         </div>
         <button type="submit" disabled={loading} style={{ width: '100%', padding: '10px' }}>
           {loading ? 'Checking...' : 'Check Now'}
