@@ -44,7 +44,8 @@ export default function LoadTestPanel() {
     };
 
     // Format data for chart
-    const chartData = status.results.map(r => ({
+    const results = status.results || [];
+    const chartData = results.map(r => ({
         time: new Date(r.timestamp * 1000).toLocaleTimeString(),
         latency: r.avg_latency.toFixed(3),
         p99: r.p99_latency.toFixed(3),
@@ -95,8 +96,8 @@ export default function LoadTestPanel() {
             </div>
             
             <div style={{ marginTop: '10px', fontSize: '0.9em', color: '#666' }}>
-                <p>Latest: {status.results.length > 0 ? `${status.results[status.results.length-1].avg_latency.toFixed(4)} ms` : '-'}</p>
-                <p>Total Points: {status.results.length}</p>
+                <p>Latest: {results.length > 0 ? `${results[results.length-1].avg_latency.toFixed(4)} ms` : '-'}</p>
+                <p>Total Points: {results.length}</p>
             </div>
         </div>
     );
