@@ -4,6 +4,8 @@ import CampaignForm from './components/CampaignForm';
 import SeedPanel from './components/SeedPanel';
 import CheckSponsored from './components/CheckSponsored';
 import LoadTestPanel from './components/LoadTestPanel';
+import RedisExplorer from './components/RedisExplorer';
+import BackendToggle, { BackendProvider } from './components/BackendToggle';
 
 function App() {
   const [campaigns, setCampaigns] = useState([]);
@@ -70,8 +72,12 @@ function App() {
   };
 
   return (
+    <BackendProvider>
     <div className="container">
-      <h1>Sponsor Campaign Manager</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h1>Sponsor Campaign Manager</h1>
+        <BackendToggle />
+      </div>
       
       <div className="grid">
         <div>
@@ -89,6 +95,10 @@ function App() {
 
           <div style={{ marginTop: '20px' }}>
              <LoadTestPanel />
+          </div>
+
+          <div style={{ marginTop: '20px' }}>
+            <RedisExplorer />
           </div>
         </div>
 
@@ -125,6 +135,7 @@ function App() {
         </div>
       </div>
     </div>
+    </BackendProvider>
   );
 }
 

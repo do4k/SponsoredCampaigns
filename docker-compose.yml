@@ -17,6 +17,17 @@ services:
       - db
       - redis
 
+  backend-csharp:
+    build: ./backend-csharp
+    ports:
+      - "8081:8081"
+    environment:
+      - Redis__Host=redis
+      - Redis__Port=6379
+      - ASPNETCORE_URLS=http://+:8081
+    depends_on:
+      - redis
+
   db:
     image: postgres:15-alpine
     environment:
@@ -37,5 +48,8 @@ services:
       - "5173:5173"
     environment:
       - VITE_API_TARGET=http://backend:8080
+      - VITE_CSHARP_API_TARGET=http://backend-csharp:8081
     depends_on:
       - backend
+      - backend-csharp
+

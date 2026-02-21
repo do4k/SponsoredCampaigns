@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import { useBackend, BACKENDS } from './BackendToggle';
 
 export default function CheckSponsored() {
+  const { backend, config: backendConfig } = useBackend();
   const [deliveryArea, setDeliveryArea] = useState('BS1');
   const [partnerIds, setPartnerIds] = useState('');
   const [includeCarousel, setIncludeCarousel] = useState(false);
@@ -26,7 +28,7 @@ export default function CheckSponsored() {
 
     const startTime = performance.now();
     try {
-      const res = await fetch('/api/sponsored/check', {
+      const res = await fetch(`${backendConfig.prefix}/sponsored/check`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -54,7 +56,19 @@ export default function CheckSponsored() {
 
   return (
     <div className="check-panel" style={{ marginTop: '20px', padding: '15px', border: '1px solid #ccc', borderRadius: '8px', background: '#f9f9f9' }}>
-      <h3>Check Sponsorship Status</h3>
+      <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        Check Sponsorship Status
+        <span style={{
+          fontSize: '11px',
+          padding: '2px 8px',
+          borderRadius: '3px',
+          background: backendConfig.color,
+          color: 'white',
+          fontWeight: 'normal',
+        }}>
+          via {backendConfig.label}
+        </span>
+      </h3>
       <form onSubmit={handleCheck}>
         <div className="form-group">
           <label style={{ display: 'block', marginBottom: '5px' }}>Delivery Area</label>
@@ -97,7 +111,7 @@ export default function CheckSponsored() {
 
       {result && (
         <div style={{ marginTop: '15px', padding: '10px', background: '#fff', border: '1px solid #eee' }}>
-          <h4>Result <span style={{fontSize: '0.8em', color: '#666', fontWeight: 'normal'}}>({responseTime}ms total, {result.meta.server_processing_ms}ms server)</span></h4>
+          <h4>Result <span style={{fontSize: '0.8em', color: '#666', fontWeight: 'normal'}}>({responseTime}ms total{result.meta.server_processing_ms != null ? `, ${result.meta.server_processing_ms}ms server` : ''})</span></h4>
           <p><strong>Time Bucket:</strong> {result.meta.time_bucket}</p>
           <p><strong>Active Partners:</strong></p>
           {result.active_partners.length > 0 ? (

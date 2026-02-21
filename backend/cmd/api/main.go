@@ -29,13 +29,18 @@ func main() {
 		api.DELETE("/campaigns/:id", handlers.DeleteCampaign)
 		api.POST("/campaigns/seed", handlers.SeedCampaigns)
 		api.POST("/sponsored/check", handlers.CheckSponsored)
-		
+
 		// Load Testing
 		api.POST("/loadtest/start", handlers.StartLoadTest)
 		api.POST("/loadtest/stop", handlers.StopLoadTest)
 		api.GET("/loadtest/status", handlers.GetLoadTestStatus)
+
+		// Redis Explorer
+		api.GET("/redis/info", handlers.RedisInfo)
+		api.GET("/redis/keys", handlers.RedisKeys)
+		api.GET("/redis/key", handlers.RedisKeyDetail)
 	}
-	
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
